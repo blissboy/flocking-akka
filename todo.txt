@@ -1,0 +1,6 @@
+Add reactors to particle
+Draw particles
+Deal with borders
+Implement pause and step
+Draw reactions
+Create control panel

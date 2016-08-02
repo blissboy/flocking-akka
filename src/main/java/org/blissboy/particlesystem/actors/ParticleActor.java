@@ -10,6 +10,7 @@ import org.blissboy.particlesystem.messages.ParticleMessages.Reactor;
 import org.blissboy.particlesystem.messages.TimePassedMessage;
 import processing.core.PVector;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,7 +24,10 @@ public class ParticleActor extends UntypedActor  {
     Map<Reactor.reactionType, Reactor> reactors;
     private PVector location = DrawingUtilities.getOriginVector();
     private PVector velocity = DrawingUtilities.getOriginVector();
+    private PVector acceleration = DrawingUtilities.getOriginVector();
     final int id;
+
+    static final float MAX_VELOCITY = 10f;
 
 
 
@@ -47,7 +51,9 @@ public class ParticleActor extends UntypedActor  {
     @Override
     public void onReceive(Object message) throws Throwable {
 
-        if ( message instanceof TimePassedMessage ) {
+        if ( message instanceof ParticleMessages.ParticleInNeighborRangeMessage) {
+            reactToNeighborMessage((ParticleMessages.ParticleInNeighborRangeMessage)message );
+        } else if ( message instanceof TimePassedMessage ) {
             this.step();
             getSender().tell(new ParticleMessages.ParticleMovedMessage(getThisParticle()), getSelf());
         } else if ( message instanceof ParticleMessages.AddReactorMessage) {
@@ -95,7 +101,8 @@ public class ParticleActor extends UntypedActor  {
                 this.id,
                 this.location,
                 this.velocity,
-                this.reactors
+                this.reactors,
+                getSelf()
         );
     }
 
@@ -104,27 +111,37 @@ public class ParticleActor extends UntypedActor  {
     }
 
     private void step() {
+        this.velocity.add(this.acceleration);
+        this.acceleration = DrawingUtilities.getOriginVector();
+        this.velocity.limit(MAX_VELOCITY);
         this.location.add(this.velocity);
 
     }
 
-    public static class Particle {
+    private void reactToNeighborMessage(ParticleMessages.ParticleInNeighborRangeMessage message) {
+        for ( Reactor r :reactors.values()) {
+            if ( r.getReactionBound() > message.getDistance()) {
+                PVector reaction = r.calculateReaction(getThisParticle(),  message.getNeighbor());
+
+            }
+        }
+    }
+
+    public static class Particle implements Serializable {
         final int id;
         final PVector location;
         final PVector velocity;
         final Map<Reactor.reactionType, Reactor> reactors;
-//        final int neighborhoodBound;
+        final int neighborhoodBound;
+        final ActorRef particleActor;
 //
-        public Particle (int id, PVector location, PVector velocity, Map<Reactor.reactionType, Reactor> reactors) {
+        public Particle (int id, PVector location, PVector velocity, Map<Reactor.reactionType, Reactor> reactors, ActorRef particleActor) {
             this.id = id;
             this.location = location;
             this.velocity = velocity;
             this.reactors = reactors;
-
-//            // herehere find the max for the neighborhood bounds
-//            for ( Reactor r: reactors.values().stream().max) {
-//                neighborhoodBound = r.getReactionBound() > neighborhoodBound ? r.getReactionBound() : neighborhoodBound;
-//            }
+            this.particleActor = particleActor;
+            this.neighborhoodBound = (reactors.values().stream().map( (r) -> {return r.getReactionBound();}).max(Integer::compare)).orElse(0);
         }
 
     }

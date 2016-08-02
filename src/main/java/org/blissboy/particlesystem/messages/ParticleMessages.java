@@ -37,7 +37,7 @@ public class ParticleMessages {
 
         public int getReactionBound();
 
-        public PVector calculateReaction(ParticleActor affected, ParticleActor affector );
+        public PVector calculateReaction(ParticleActor.Particle affected, ParticleActor.Particle affector );
     }
 
     public static class AddReactorMessage implements Serializable {
@@ -57,6 +57,26 @@ public class ParticleMessages {
         public AddReactorMessage(Reactor r, Reactor.reactionType type) {
             this.reactor = r;
             this.type = type;
+        }
+    }
+
+    public static class ParticleInNeighborRangeMessage implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final ParticleActor.Particle neighbor;
+        private final float distance;
+
+        public ParticleActor.Particle getNeighbor() {
+            return neighbor;
+        }
+
+        public float getDistance() {
+            return distance;
+        }
+
+        public ParticleInNeighborRangeMessage(ParticleActor.Particle neighbor, float distance) {
+            this.neighbor = neighbor;
+            this.distance = distance;
         }
     }
 

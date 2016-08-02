@@ -54,7 +54,12 @@ public class FlockActor extends UntypedActor {
             for (int j=i+1; j<ids.length; j++) {
                 compareP = particles.get(ids[j]);
                 dist = currentP.location.dist(compareP.location);
-                if (currentP. )
+                if (currentP.neighborhoodBound > dist) {
+                    currentP.particleActor.tell(new ParticleMessages.ParticleInNeighborRangeMessage(compareP, dist), getSelf());
+                }
+                if (compareP.neighborhoodBound > dist) {
+                    compareP.particleActor.tell(new ParticleMessages.ParticleInNeighborRangeMessage(currentP, dist), getSelf());
+                }
             }
         }
     }
